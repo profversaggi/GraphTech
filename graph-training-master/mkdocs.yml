@@ -1,0 +1,14 @@
+site_name: Graph Training
+nav:
+  - Home: index.md
+  - Graph Modeling: modeling.md
+  - Graph Algorithms: algorithms.md
+  - Graph Visualization: visualization.md
+  - DevDays: devdays.md
+repo_name: 'graph-training'
+repo_url: 'https://github.optum.com/ATC/graph-training'
+edit_uri: 'blob/master/docs'
+theme:
+  name: material
+  logo: img/graph-brain.png
+  favicon: img/favicon.ico

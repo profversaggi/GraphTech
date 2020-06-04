@@ -1,0 +1,196 @@
+import com.optum.giraffle.tasks.GsqlTask
+import io.github.httpbuilderng.http.HttpTask
+
+import groovyx.net.http.FromServer
+import groovyx.net.http.ChainedHttpConfig
+import groovy.json.JsonSlurper
+
+buildscript{
+    dependencies {
+        classpath "com.opencsv:opencsv:3.8"
+    }
+}
+
+plugins {
+    id "com.optum.giraffle" version "1.2.0"
+    id "net.saliman.properties" version "1.4.6"
+    id "io.github.http-builder-ng.http-plugin" version "0.1.1"
+}
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    if(project.hasProperty('tgVersion')){
+        gsqlRuntime "com.tigergraph.client:gsql_client:" + tgVersion
+    }
+    else{
+        gsqlRuntime "com.tigergraph.client:gsql_client:+"
+    }
+}
+
+def tokenMap = ["graphname": gsqlGraphname]
+def grpSchema = "Tigergraph Schema"
+
+tigergraph {
+    scriptDir = file("db_scripts")
+    tokens = tokenMap
+    serverName = gsqlHost
+    userName = gsqlUsername
+    password = gsqlPassword
+    adminUserName = gsqlAdminUsername
+    adminPassword = gsqlAdminPassword
+}
+
+http {
+    config {
+        request.uri = "http://"+gsqlRest
+    }
+}
+
+def restpp_load(request, response, String path, String loadJob, String loadFilename) {
+    File file = new File(path)
+    request.uri.path = '/ddl/'+gsqlGraphname
+    request.uri.query = [tag: loadJob, filename: loadFilename]
+    request.body = file
+    request.contentType = 'text/csv'
+    response.failure { FromServer fs ->
+        println("Could not load data. Has the schema been defined?")
+    }
+    response.parser('application/json'){ ChainedHttpConfig cfg, FromServer fs ->
+        def json = new JsonSlurper().parseText(fs.reader.text)
+        def vertices
+        def edges
+        if(json.containsKey("results")){
+            vertices = json.results[0].statistics.vertex
+            edges = json.results[0].statistics.edge
+        }
+        else{
+            vertices = json.reports[0].statistics.vertex
+            edges = json.reports[0].statistics.edge
+        }
+
+        vertices.each {
+            println("Successfully loaded " + it.validObject + " " + it.typeName + " vertices!")
+        }
+        edges.each {
+            println("Successfully loaded " + it.validObject + " " + it.typeName + " edges!")
+        }
+        if(vertices.size() == 0){
+            println("No vertices loaded")
+        }
+    }
+}
+
+task dropAll(type: GsqlTask) {
+    group = grpSchema
+    description = "Used to clear the TigerGraph Environment"
+    scriptPath = "dropAll.gsql"
+    superUser = true
+}
+
+task createSchema(type: GsqlTask,
+    dependsOn: [dropAll] // (5)
+) { // (4)
+    group = grpSchema
+    description = "Create the schema on the database"
+    scriptPath = "schema.gsql" // (6)
+    superUser = true // (7)
+}
+
+task loadPatients(type: HttpTask){
+    dependsOn('buildPatients')
+    group = grpSchema
+    description = "Loads Patient CSV Data"
+    post {restpp_load(request, response, "resources/patients.csv", "loadPatients", "f")}
+}
+
+task buildPatients(type: GsqlTask, dependsOn: [dropAll] ) {
+    scriptPath = "loadPatients.gsql"
+    superUser = true
+}
+
+task loadExercise4(type: HttpTask){
+    dependsOn('buildExercise4')
+    group = grpSchema
+    description = "Loads Schema, Data and Queries for Exercise 4"
+    post {restpp_load(request, response, "resources/patients.csv", "loadPatients", "f")}
+    post {restpp_load(request, response, "resources/providers.csv", "loadProviders", "f")}
+    post {restpp_load(request, response, "resources/encounters.csv", "loadVisits", "f")}
+}
+
+task buildExercise4(type: GsqlTask, dependsOn: [dropAll] ) {
+    scriptPath = "loadExercise4.gsql"
+    superUser = true
+}
+
+task loadExercise5(type: HttpTask){
+    dependsOn('buildExercise5')
+    group = grpSchema
+    description = "Loads Schema, Data and Queries for Exercise 5"
+    post {restpp_load(request, response, "resources/patients.csv", "loadPatients", "f")}
+    post {restpp_load(request, response, "resources/providers.csv", "loadProviders", "f")}
+    post {restpp_load(request, response, "resources/encounters.csv", "loadVisits", "f")}
+}
+
+task buildExercise5(type: GsqlTask, dependsOn: [dropAll] ) {
+    scriptPath = "loadExercise5.gsql"
+    superUser = true
+}
+
+task loadExercise6(type: HttpTask){
+    dependsOn('buildExercise6')
+    group = grpSchema
+    description = "Loads Schema, Data and Queries for Exercise 6"
+    post {restpp_load(request, response, "resources/patients.csv", "loadPatients", "f")}
+    post {restpp_load(request, response, "resources/providers.csv", "loadProviders", "f")}
+    post {restpp_load(request, response, "resources/encounters.csv", "loadVisits", "f")}
+    post {restpp_load(request, response, "resources/allergies.csv", "loadAllergies", "f")}
+    post {restpp_load(request, response, "resources/careplans.csv", "loadCarePlans", "f")}
+    post {restpp_load(request, response, "resources/conditions.csv", "loadConditions", "f")}
+    post {restpp_load(request, response, "resources/imaging_studies.csv", "loadImagingStudies", "f")}
+    post {restpp_load(request, response, "resources/immunizations.csv", "loadImmunizations", "f")}
+    post {restpp_load(request, response, "resources/medications.csv", "loadMedications", "f")}
+    post {restpp_load(request, response, "resources/observations.csv", "loadObservations", "f")}
+    post {restpp_load(request, response, "resources/procedures.csv", "loadProcedures", "f")}
+    post {restpp_load(request, response, "resources/organizations.csv", "loadOrganizations", "f")}
+    post {restpp_load(request, response, "resources/zips.csv", "loadGeospatial", "f")}
+    post {restpp_load(request, response, "resources/patient_locations.csv", "loadLocations", "p")}
+    post {restpp_load(request, response, "resources/organization_locations.csv", "loadLocations", "o")}
+    post {restpp_load(request, response, "resources/patients.csv", "loadAddresses", "p")}
+    post {restpp_load(request, response, "resources/organizations.csv", "loadAddresses", "o")}
+}
+
+task buildExercise6(type: GsqlTask, dependsOn: [dropAll] ) {
+    scriptPath = "loadExercise6.gsql"
+    superUser = true
+}
+
+task loadExercise7(type: HttpTask){
+    dependsOn('buildExercise7')
+    group = grpSchema
+    description = "Loads Schema, Data and Queries for Exercise 7"
+    post {restpp_load(request, response, "resources/patients.csv", "loadPatients", "f")}
+    post {restpp_load(request, response, "resources/providers.csv", "loadProviders", "f")}
+    post {restpp_load(request, response, "resources/encounters.csv", "loadVisits", "f")}
+    post {restpp_load(request, response, "resources/allergies.csv", "loadAllergies", "f")}
+    post {restpp_load(request, response, "resources/careplans.csv", "loadCarePlans", "f")}
+    post {restpp_load(request, response, "resources/conditions.csv", "loadConditions", "f")}
+    post {restpp_load(request, response, "resources/imaging_studies.csv", "loadImagingStudies", "f")}
+    post {restpp_load(request, response, "resources/immunizations.csv", "loadImmunizations", "f")}
+    post {restpp_load(request, response, "resources/medications.csv", "loadMedications", "f")}
+    post {restpp_load(request, response, "resources/observations.csv", "loadObservations", "f")}
+    post {restpp_load(request, response, "resources/procedures.csv", "loadProcedures", "f")}
+    post {restpp_load(request, response, "resources/organizations.csv", "loadOrganizations", "f")}
+    post {restpp_load(request, response, "resources/zips.csv", "loadGeospatial", "f")}
+    post {restpp_load(request, response, "resources/patient_locations.csv", "loadLocations", "p")}
+    post {restpp_load(request, response, "resources/organization_locations.csv", "loadLocations", "o")}
+    post {restpp_load(request, response, "resources/patients.csv", "loadAddresses", "p")}
+    post {restpp_load(request, response, "resources/organizations.csv", "loadAddresses", "o")}
+}
+
+task buildExercise7(type: GsqlTask, dependsOn: [dropAll] ) {
+    scriptPath = "loadExercise7.gsql"
+    superUser = true
+}

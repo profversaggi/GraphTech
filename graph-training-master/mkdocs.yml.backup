@@ -1,0 +1,35 @@
+site_name: Graph Training
+nav:
+  - Graph Modeling:
+    - Contents: graph-modeling-contents.md
+   - Graph Algorithms:
+     - Contents: graph-algorithm-contents.md
+   - Graph Visualization:
+     - Contents: graph-visualization-contents.md
+    - DevDays:
+     - Contents: devdays-contents.md
+   - FAQ:
+     - FAQ: faq/faq.md
+   - Contact: contact.md
+
+repo_name: 'graph-training'
+repo_url: 'https://github.optum.com/ATC/graph-training'
+edit_uri: 'blob/master/docs'
+copyright: 'Copyright &copy; 2020 Optum'
+theme:
+  name: material
+  logo: img/graph-brain.png
+  favicon: img/favicon.ico
+  palette:
+    primary: 'amber'
+    accent: 'amber'
+  feature:
+    tabs: true
+  custom_dir: 'theme'
+markdown_extensions:
+  - admonition
+  - footnotes
+  - toc:
+      permalink: true
+  - codehilite:
+      linenums: true

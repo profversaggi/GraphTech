@@ -1,0 +1,11 @@
+version: '3.4'
+
+services:
+  tigergraph_server:
+    image: docker.repo1.uhc.com/graphtraining/tigergraph:latest
+    container_name: tg_algorithms
+    tty: true
+    stdin_open: true
+    ports:
+      - "4142:14240"
+      - "9000:9000"

@@ -1,0 +1,10 @@
+﻿patientID,givenName,familyName,birthDate,medicalCondition
+p1,Sue,Smith,1985-01-15,cold
+p2,Brian,Adams,2000-01-15,flu
+p3,Peg,Piasta,2001-01-15,back pain
+p4,Molly,Davis,2000-01-15,prenatal visit
+p5,Olivia,Jones,1990-01-15,concussion
+p6,Riley,Appiah,2000-01-15,cut on arm
+p7,Arun,Patel,2000-01-15,burise on foot
+p8,Lewis,Boucher,1995-01-15,neck pain
+p9,Miriam,Olson,1958-01-15,stress
